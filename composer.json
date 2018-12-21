@@ -1,0 +1,13 @@
+{
+    "name": "varunsridharan/php-autoloader",
+    "description": "Lightweight PSR-4 PHP Autoloader Class.",
+    "type": "library",
+    "license": "GPL-3.0-or-later",
+    "authors": [
+        {
+            "name": "Varun",
+            "email": "varunsridharan23@gmail.com"
+        }
+    ],
+    "require": {}
+}
