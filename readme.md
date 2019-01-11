@@ -97,3 +97,4 @@ Or **install it manually**:
 ---
 ## Sponsored By
 [![DigitalOcean](https://vsp.ams3.cdn.digitaloceanspaces.com/cdn/DO_Logo_Horizontal_Blue-small.png)](https://s.svarun.in/Ef)
+[![JetBrains](https://ams3.digitaloceanspaces.com/vsp/cdn/jetbrains-small.png)](https://www.jetbrains.com)
