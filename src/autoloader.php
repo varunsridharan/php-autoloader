@@ -21,14 +21,6 @@ namespace Varunsridharan\PHP;
  */
 class Autoloader {
 	/**
-	 * Stores Subinstance.
-	 *
-	 * @var array
-	 * @access protected.
-	 */
-	protected $sub_instance = array();
-
-	/**
 	 * @var null
 	 * @access
 	 */
@@ -44,7 +36,7 @@ class Autoloader {
 	 * @var null
 	 * @access
 	 */
-	protected $remaps = null;
+	protected $mapping = null;
 
 	/**
 	 * Search And Stores All Subfolders in the base dir if required.
@@ -63,20 +55,60 @@ class Autoloader {
 	protected $debug = array();
 
 	/**
+	 * Stores Class Operation.
+	 *
+	 * @var array
+	 * @access
+	 */
+	protected $options = array();
+
+	/**
+	 * Stores Current Lookup Class.
+	 *
+	 * @var bool
+	 * @access
+	 */
+	protected $lookup_class = false;
+
+	/**
 	 * Autoloader constructor.
 	 *
-	 * @param string $namespaces
-	 * @param string $base_path
-	 * @param array  $remaps
-	 * @param bool   $prepend_autoload
+	 * @param string      $namespace
+	 * @param string|bool $path
+	 * @param array       $options
+	 * @param             $prepend_autoload
+	 *
+	 * @throws \Exception
 	 */
-	public function __construct( $namespaces = '', $base_path = '', $remaps = array(), $prepend_autoload = false ) {
-		if ( ! is_array( $namespaces ) ) {
-			$this->namespace = $namespaces;
-			$this->base_path = $this->trailingslashit( $base_path );
-			$this->remaps    = $remaps;
+	public function __construct( $namespace = '', $path = false, $options = array(), $prepend_autoload = false ) {
+		if ( ! is_array( $namespace ) ) {
+			$this->namespace = $namespace;
+			$this->base_path = $this->trailingslashit( $path );
+
+			$default_options = array(
+				'exclude' => false,
+				'mapping' => array(),
+				'debug'   => false,
+			);
+			$this->options   = array_merge( $default_options, $options );
+			if ( false !== $this->options['exclude'] && ! is_array( $this->options['exclude'] ) ) {
+				$this->options['exclude'] = array( $this->options['exclude'] );
+			}
+
+			$this->mapping = $this->options['mapping'];
 			$this->register( $prepend_autoload );
+			unset( $this->options['mapping'] );
 		}
+	}
+
+	/**
+	 * @param      $key
+	 * @param bool $default
+	 *
+	 * @return bool|mixed
+	 */
+	protected function option( $key, $default = false ) {
+		return ( isset( $this->options[ $key ] ) ) ? $this->options[ $key ] : $default;
 	}
 
 	/**
@@ -85,6 +117,7 @@ class Autoloader {
 	 * @param bool $prepend
 	 *
 	 * @return $this
+	 * @throws \Exception
 	 */
 	public function register( $prepend = false ) {
 		spl_autoload_register( array( &$this, 'load_class' ), true, $prepend );
@@ -140,7 +173,11 @@ class Autoloader {
 	 * @return $this
 	 */
 	protected function debug( $msg ) {
-		$this->debug[] = $msg;
+		if ( true === $this->option( 'debug' ) ) {
+			$this->debug[] = $msg;
+		} elseif ( $this->lookup_class === $this->option( 'debug' ) ) {
+			$this->debug[] = $msg;
+		}
 		return $this;
 	}
 
@@ -154,24 +191,44 @@ class Autoloader {
 	}
 
 	/**
+	 * Validates If Its A Proper Lookup Namespace.
+	 *
+	 * @return bool
+	 */
+	public function is_valid_lookup() {
+		if ( strpos( strtolower( $this->lookup_class ), strtolower( $this->namespace ) ) !== false ) {
+			if ( false !== $this->option( 'exclude' ) ) {
+				foreach ( $this->option( 'exclude' ) as $namespace ) {
+					if ( strpos( strtolower( $this->lookup_class ), strtolower( $namespace ) ) !== false ) {
+						return false;
+					}
+				}
+			}
+			return true;
+		}
+		return false;
+	}
+
+	/**
 	 * Works For PHP SPL Autoloader and loads class based on the requests.
 	 *
 	 * @param $org_class
 	 */
 	public function load_class( $org_class ) {
-		if ( strpos( strtolower( $org_class ), strtolower( $this->namespace ) ) !== false ) {
+		$this->lookup_class = $org_class;
+		if ( $this->is_valid_lookup() ) {
 			$filenames = array();
 			$folders   = array();
 			$is_loaded = false;
 
 			$this->debug( 'Class Requested : ' . $org_class );
-			$this->debug( 'Checking in Remaps Array' );
+			$this->debug( 'Checking in Mapping Array' );
 
-			if ( isset( $this->remaps[ $org_class ] ) && ( file_exists( $this->remaps[ $org_class ] ) || file_exists( $this->base_path . $this->remaps[ $org_class ] ) ) ) {
-				$is_loaded = $this->load_file( $this->remaps[ $org_class ], $org_class );
+			if ( isset( $this->mapping[ $org_class ] ) && ( file_exists( $this->mapping[ $org_class ] ) || file_exists( $this->base_path . $this->mapping[ $org_class ] ) ) ) {
+				$is_loaded = $this->load_file( $this->mapping[ $org_class ], $org_class );
 
 				if ( false === $is_loaded ) {
-					$is_loaded = $this->load_file( $this->base_path . $this->remaps[ $org_class ], $org_class );
+					$is_loaded = $this->load_file( $this->base_path . $this->mapping[ $org_class ], $org_class );
 				}
 			}
 
@@ -221,6 +278,8 @@ class Autoloader {
 
 			$this->debug( '' );
 		}
+
+		$this->lookup_class = false;
 	}
 
 	/**
@@ -321,13 +380,15 @@ class Autoloader {
 			return array(
 				$class,
 				str_replace( '_', '-', $class ),
+				strtolower( $file ),
+				str_replace( '-', '_', $class ),
 			);
 		}
 		return false;
 	}
 
 	/**
-	 * Adds Custom Remaps To Remaps Array.
+	 * Adds Custom mapping To mapping Array.
 	 *
 	 * @param $class
 	 * @param $file
@@ -335,20 +396,20 @@ class Autoloader {
 	 * @return $this
 	 */
 	public function add( $class, $file ) {
-		$this->remaps[ $class ] = $file;
+		$this->mapping[ $class ] = $file;
 		return $this;
 	}
 
 	/**
-	 * Removes Custom Remaps To a Class in Remaps Array.
+	 * Removes Custom mapping To a Class in mapping Array.
 	 *
 	 * @param $classs
 	 *
 	 * @return $this
 	 */
 	public function remove( $classs ) {
-		if ( isset( $this->remaps[ $classs ] ) ) {
-			unset( $this->remaps[ $classs ] );
+		if ( isset( $this->mapping[ $classs ] ) ) {
+			unset( $this->mapping[ $classs ] );
 		}
 		return $this;
 	}
