@@ -1,5 +1,12 @@
 # PHP Autoloader
-Lightweight PSR-4 PHP Autoloader Class. 
+Lightweight PSR-4 PHP Autoloader Class.
+
+[![Latest Stable Version](https://poser.pugx.org/varunsridharan/php-autoloader/version)](https://packagist.org/packages/varunsridharan/php-autoloader)
+[![Total Downloads](https://poser.pugx.org/varunsridharan/php-autoloader/downloads)](https://packagist.org/packages/varunsridharan/php-autoloader)
+[![Latest Unstable Version](https://poser.pugx.org/varunsridharan/php-autoloader/v/unstable)](//packagist.org/packages/varunsridharan/php-autoloader)
+[![License](https://poser.pugx.org/varunsridharan/php-autoloader/license)](https://packagist.org/packages/varunsridharan/php-autoloader)
+[![composer.lock available](https://poser.pugx.org/varunsridharan/php-autoloader/composerlock)](https://packagist.org/packages/varunsridharan/php-autoloader) 
+
 
 ## Installation
 The preferred way to install this extension is through [Composer](http://getcomposer.org/download/).
@@ -26,35 +33,64 @@ Or **install it manually**:
 ## Usage
 ### Arguments
 * **`$namespace` :** PHP Namspace To Handle Autoload For  
-* **`$basepath` :** Where To Lookup For Files.
-* **`$remaps` :** Custom Array of Full Classname And File Path.
+* **`$path` :** Full Path to lookup for php files
+* **`$options` :** An Array of useful Arguments.
+* **`$prepend` :** Option to prepend / append current autoloader with exists autoloaders.
+
+#### `$options` Arguments
+```php
+  array(
+      /**
+       * An Array of Class Namespace to Exclude While Checking for current namespace.
+       * Eg
+       * Main Namespace \Testing\Core
+       * Exclude \Testing\Core\Abstracts
+       */
+      'exclude' => false,
+      
+      /**
+       * Custom Option To Quickly Remap A Class File. 
+       * If any class added then it will not search.
+       * instead it gets the location from here and loads it.
+       * An Array of class and its file location
+       */
+      'mapping' => array(),
+      
+      /**
+       * Set To True / False.
+       */
+      'debug'   => false,
+  );
+```
 
 ### Example Folder Stucture
 ```php
-| - src\
-| -- class1\
-| --- class1.php
-| -- class2\
-| --- class2.php
-| --- class3\
-| ---- class3.php
-| - loader.php
-| - index.php
+  | - src\
+  | -- class1\
+  | --- class1.php
+  | -- class2\
+  | --- class2.php
+  | --- class3\
+  | ---- class3.php
+  | - loader.php
+  | - index.php
 ```
 ### `loader.php` SourceCode
 ```php
-$autoloader = new \Varunsridharan\PHP\Autoloader('varun',__DIR__.'/src/',array(
-    'varun\class2\class3\class3' => 'src/class2/class3/class3.php',
-))
+  $autoloader = new \Varunsridharan\PHP\Autoloader('varun',__DIR__.'/src/',array(
+      'mapping' => array(
+          'varun\class2\class3\class3' => 'src/class2/class3/class3.php',
+      )
+  ))
 ```
 
 ### `index.php` SoruceCode
 ```php
-require __DIR__.'loader.php';
-
-$class1 = new \varun\class1\class1(); // This file is autoloaded based on the namespace 
-$class2 = new \varun\class1\class2(); // This file is autoloaded based on the namespace 
-$class3 = new \varun\class1\class3(); // This file is loaded using the data from remap array
+  require __DIR__.'loader.php';
+  
+  $class1 = new \varun\class1\class1(); // This file is autoloaded based on the namespace 
+  $class2 = new \varun\class1\class2(); // This file is autoloaded based on the namespace 
+  $class3 = new \varun\class1\class3(); // This file is loaded using the data from remap array
 ```
 
 
