@@ -335,7 +335,7 @@ class Autoloader {
 				}
 			}
 		} else {
-			$return = $this->trailingslashit( $path );
+			$return = array( $this->trailingslashit( $path ) );
 		}
 
 		return $return;
