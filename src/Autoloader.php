@@ -263,14 +263,16 @@ class Autoloader {
 				$this->debug( '' );
 				$this->debug( 'Checking In All subfolders Inside Base Path' );
 				$folders = $this->get_folders( $this->base_path );
-				foreach ( $folders as $folder ) {
-					foreach ( $filenames as $file ) {
-						$is_loaded = $this->load_file( $this->trailingslashit( $folder ) . $file, $org_class );
-						if ( $is_loaded ) {
-							$this->debug( 'Class Found' );
-							break;
-						} else {
-							$this->debug( 'File Not Found In : ' . $this->trailingslashit( $folder ) . $file );
+				if( is_array( $folders ) ){
+					foreach ( $folders as $folder ) {
+						foreach ( $filenames as $file ) {
+							$is_loaded = $this->load_file( $this->trailingslashit( $folder ) . $file, $org_class );
+							if ( $is_loaded ) {
+								$this->debug( 'Class Found' );
+								break;
+							} else {
+								$this->debug( 'File Not Found In : ' . $this->trailingslashit( $folder ) . $file );
+							}
 						}
 					}
 				}
