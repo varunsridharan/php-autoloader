@@ -312,31 +312,27 @@ if ( ! class_exists( '\Varunsridharan\PHP\Autoloader' ) ) {
 				 *    'interface.your.class.php',
 				 * )
 				 */
-				return array_unique( array_filter( array(
-					$class_name . '.php',
-					$class_with_hypen . '.php',
-					$class_with_dot . '.php',
+				$return = array();
 
-					// With Class Prefex
-					'class_' . $class_name . '.php',
-					'class-' . $class_with_hypen . '.php',
-					'class.' . $class_with_dot . '.php',
+				$return[] = 'class-' . $class_with_hypen . '.php';
+				$return[] = $class_with_hypen . '.php';
+				$return[] = 'abstract-' . $class_with_hypen . '.php';
+				$return[] = 'trait-' . $class_with_hypen . '.php';
+				$return[] = 'interface-' . $class_with_hypen . '.php';
 
-					// With Abstract Prefix
-					'abstract_' . $class_name . '.php',
-					'abstract-' . $class_with_hypen . '.php',
-					'abstract.' . $class_with_dot . '.php',
+				$return[] = 'class_' . $class_name . '.php';
+				$return[] = $class_name . '.php';
+				$return[] = 'abstract_' . $class_name . '.php';
+				$return[] = 'trait_' . $class_name . '.php';
+				$return[] = 'interface_' . $class_name . '.php';
 
-					// With Trait Prefix.
-					'trait_' . $class_name . '.php',
-					'trait-' . $class_with_hypen . '.php',
-					'trait.' . $class_with_dot . '.php',
+				$return[] = 'class.' . $class_with_dot . '.php';
+				$return[] = $class_with_dot . '.php';
+				$return[] = 'abstract.' . $class_with_dot . '.php';
+				$return[] = 'trait.' . $class_with_dot . '.php';
+				$return[] = 'interface.' . $class_with_dot . '.php';
 
-					// With Interface Prefix.
-					'interface_' . $class_name . '.php',
-					'interface-' . $class_with_hypen . '.php',
-					'interface.' . $class_with_dot . '.php',
-				) ) );
+				return array_unique( array_filter( $return ) );
 			}
 			return false;
 		}
