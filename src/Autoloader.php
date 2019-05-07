@@ -176,7 +176,7 @@ if ( ! class_exists( '\Varunsridharan\PHP\Autoloader' ) ) {
 				 *    '\somenamespace\someclass2' => 'your-path/file2.php'
 				 * )
 				 */
-				if ( isset( $this->mapping[ $class ] ) ) {
+				if ( isset( $this->mappings[ $class ] ) ) {
 					$is_loaded = $this->load_file( $this->mappings[ $class ], $class );
 					if ( false === $is_loaded ) {
 						$is_loaded = $this->load_file( $this->base_path . $this->mappings[ $class ], $class );
@@ -359,16 +359,28 @@ if ( ! class_exists( '\Varunsridharan\PHP\Autoloader' ) ) {
 			if ( empty( $class_name ) ) {
 				return false;
 			}
-			$folder_class = str_replace( strtolower( $this->namespace ), '', strtolower( $class ) );
-			$folder_class = str_replace( strtolower( $class_name ), '', $folder_class );
-			$folder_class = strtolower( str_replace( '\\', '/', $folder_class ) );
-			$folder_class = trim( trim( $folder_class, '/' ), '\\' );
+
+			$_class = explode( '\\', $class );
+			$_keys  = array_keys( $_class );
+			if ( ! empty( $_keys ) ) {
+				$end = end( $_keys );
+				if ( ! empty( $end ) ) {
+					unset( $_class[ $end ] );
+				}
+			}
+			$_class = strtolower( implode( '\\', $_class ) );
+
+			$folder_class = str_replace( strtolower( $this->namespace ), '', $_class );
+			$folder_class = str_replace( '\\', '/', $folder_class );
+			$folder_class = trim( $folder_class, '/' );
+			$folder_class = trim( $folder_class, '\\' );
+
 			return array_unique( array_filter( array(
-				'/',
 				$folder_class,
 				str_replace( '_', '-', $folder_class ),
 				$class_name,
 				str_replace( '_', '-', $class_name ),
+				'/',
 			) ) );
 		}
 
@@ -388,6 +400,8 @@ if ( ! class_exists( '\Varunsridharan\PHP\Autoloader' ) ) {
 
 		/**
 		 * Checks if requested class is a valid lookup.
+		 *
+		 * @param string $class
 		 *
 		 * @return bool
 		 */
