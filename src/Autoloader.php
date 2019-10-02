@@ -69,6 +69,13 @@ if ( ! class_exists( '\Varunsridharan\PHP\Autoloader' ) ) {
 		protected $mappings = false;
 
 		/**
+		 * Stores Classmap Generated Files.
+		 *
+		 * @var bool
+		 */
+		protected $classmaps = false;
+
+		/**
 		 * Autoloader constructor.
 		 *
 		 * @param $namespace
@@ -97,10 +104,21 @@ if ( ! class_exists( '\Varunsridharan\PHP\Autoloader' ) ) {
 				'prepend'        => false,
 				'mapping'        => false,
 				'search_folders' => false,
+				'classmaps'      => false,
 			), $options );
 			$this->options['exclude'] = ( ! is_array( $this->options['exclude'] ) ) ? array_filter( array( $this->options['exclude'] ) ) : $this->options['exclude'];
 			$this->options['mapping'] = ( ! is_array( $this->options['mapping'] ) ) ? array() : $this->options['mapping'];
 			$this->mappings           = $this->options['mapping'];
+
+			if ( ! empty( $this->options['classmaps'] ) ) {
+				if ( is_array( $this->options['classmaps'] ) ) {
+					$this->classmaps = $this->options['classmaps'];
+					unset( $this->options['classmaps'] );
+				} elseif ( is_string( $this->options['classmaps'] ) && file_exists( $this->options['classmaps'] ) ) {
+					$this->classmaps = include $this->options['classmaps'];
+				}
+			}
+
 			unset( $this->options['mapping'] );
 			return $this;
 		}
@@ -172,6 +190,16 @@ if ( ! class_exists( '\Varunsridharan\PHP\Autoloader' ) ) {
 				$is_loaded = false;
 
 				/**
+				 * @uses varunsridharan/php-classmap-generator script which provides location along with class name
+				 */
+				if ( isset( $this->classmaps[ $class ] ) ) {
+					$is_loaded = $this->load_file( $this->classmaps[ $class ], $class );
+					if ( false === $is_loaded ) {
+						$is_loaded = $this->load_file( $this->base_path . $this->classmaps[ $class ], $class );
+					}
+				}
+
+				/**
 				 * Checks and loads file if given class exists in mapping array.
 				 *
 				 * @example array(
@@ -179,7 +207,7 @@ if ( ! class_exists( '\Varunsridharan\PHP\Autoloader' ) ) {
 				 *    '\somenamespace\someclass2' => 'your-path/file2.php'
 				 * )
 				 */
-				if ( isset( $this->mappings[ $class ] ) ) {
+				if ( false === $is_loaded && isset( $this->mappings[ $class ] ) ) {
 					$is_loaded = $this->load_file( $this->mappings[ $class ], $class );
 					if ( false === $is_loaded ) {
 						$is_loaded = $this->load_file( $this->base_path . $this->mappings[ $class ], $class );
