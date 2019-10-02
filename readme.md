@@ -33,6 +33,7 @@ Or **install it manually**:
 ## Usage
 ### Arguments
 * **`$namespace` :** PHP Namspace To Handle Autoload For  
+* **`$classmap` :** https://github.com/varunsridharan/php-classmap-generator Generated Classmap File.
 * **`$path` :** Full Path to lookup for php files
 * **`$options` :** An Array of useful Arguments.
 * **`$prepend` :** Option to prepend / append current autoloader with exists autoloaders.
