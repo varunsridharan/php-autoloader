@@ -73,7 +73,15 @@ if ( ! class_exists( '\Varunsridharan\PHP\Autoloader' ) ) {
 		 *
 		 * @var bool
 		 */
-		protected $classmaps = false;
+		protected $classmap = false;
+
+		/**
+		 * Stores All Classmaps.
+		 *
+		 * @var array
+		 * @static
+		 */
+		protected static $classmaps = array();
 
 		/**
 		 * Autoloader constructor.
@@ -104,22 +112,26 @@ if ( ! class_exists( '\Varunsridharan\PHP\Autoloader' ) ) {
 				'prepend'        => false,
 				'mapping'        => false,
 				'search_folders' => false,
-				'classmaps'      => false,
+				'classmap'       => false,
 			), $options );
 			$this->options['exclude'] = ( ! is_array( $this->options['exclude'] ) ) ? array_filter( array( $this->options['exclude'] ) ) : $this->options['exclude'];
 			$this->options['mapping'] = ( ! is_array( $this->options['mapping'] ) ) ? array() : $this->options['mapping'];
 			$this->mappings           = $this->options['mapping'];
 
-			if ( ! empty( $this->options['classmaps'] ) ) {
-				if ( is_array( $this->options['classmaps'] ) ) {
-					$this->classmaps = $this->options['classmaps'];
-					unset( $this->options['classmaps'] );
-				} elseif ( is_string( $this->options['classmaps'] ) && file_exists( $this->options['classmaps'] ) ) {
-					$this->classmaps = include $this->options['classmaps'];
+			if ( ! empty( $this->options['classmap'] ) && is_string( $this->options['classmap'] ) && file_exists( $this->options['classmap'] ) ) {
+				$this->classmap = $this->options['classmap'];
+				if ( ! isset( self::$classmaps[ $this->options['classmap'] ] ) ) {
+					$data = include $this->options['classmap'];
+					foreach ( $data as $key => $value ) {
+						unset( $data[ $key ] );
+						$data[ strtolower( $key ) ] = $value;
+					}
+					self::$classmaps[ $this->options['classmap'] ] = $data;
 				}
 			}
 
 			unset( $this->options['mapping'] );
+			unset( $this->options['classmaps'] );
 			return $this;
 		}
 
@@ -185,6 +197,8 @@ if ( ! class_exists( '\Varunsridharan\PHP\Autoloader' ) ) {
 		 */
 		public function autoload( $class ) {
 			if ( true === $this->is_valid_lookup( $class ) ) {
+				$lclass    = strtolower( $class );
+				$ckey      = $this->classmap;
 				$filenames = null;
 				$folders   = null;
 				$is_loaded = false;
@@ -192,62 +206,59 @@ if ( ! class_exists( '\Varunsridharan\PHP\Autoloader' ) ) {
 				/**
 				 * @uses varunsridharan/php-classmap-generator script which provides location along with class name
 				 */
-				if ( isset( $this->classmaps[ $class ] ) ) {
-					$is_loaded = $this->load_file( $this->classmaps[ $class ], $class );
-					if ( false === $is_loaded ) {
-						$is_loaded = $this->load_file( $this->base_path . $this->classmaps[ $class ], $class );
+				if ( isset( self::$classmaps[ $ckey ][ $lclass ] ) && file_exists( $this->base_path . self::$classmaps[ $ckey ][ $lclass ] ) ) {
+					$this->load_file( $this->base_path . self::$classmaps[ $ckey ][ $lclass ], $class );
+				} else {
+					/**
+					 * Checks and loads file if given class exists in mapping array.
+					 *
+					 * @example array(
+					 *    '\somenamespace\someclass' => 'your-path/file.php'
+					 *    '\somenamespace\someclass2' => 'your-path/file2.php'
+					 * )
+					 */
+					if ( false === $is_loaded && isset( $this->mappings[ $class ] ) ) {
+						$is_loaded = $this->load_file( $this->mappings[ $class ], $class );
+						if ( false === $is_loaded ) {
+							$is_loaded = $this->load_file( $this->base_path . $this->mappings[ $class ], $class );
+						}
 					}
-				}
 
-				/**
-				 * Checks and loads file if given class exists in mapping array.
-				 *
-				 * @example array(
-				 *    '\somenamespace\someclass' => 'your-path/file.php'
-				 *    '\somenamespace\someclass2' => 'your-path/file2.php'
-				 * )
-				 */
-				if ( false === $is_loaded && isset( $this->mappings[ $class ] ) ) {
-					$is_loaded = $this->load_file( $this->mappings[ $class ], $class );
+					/**
+					 * Checks and loads class based on the files & folder found.
+					 */
 					if ( false === $is_loaded ) {
-						$is_loaded = $this->load_file( $this->base_path . $this->mappings[ $class ], $class );
-					}
-				}
+						$filenames = $this->get_possible_filenames( $class );
+						$folders   = $this->get_possible_foldernames( $class );
 
-				/**
-				 * Checks and loads class based on the files & folder found.
-				 */
-				if ( false === $is_loaded ) {
-					$filenames = $this->get_possible_filenames( $class );
-					$folders   = $this->get_possible_foldernames( $class );
-
-					if ( is_array( $filenames ) && is_array( $folders ) && ! empty( $filenames ) && ! empty( $folders ) ) {
-						foreach ( $folders as $folder ) {
-							foreach ( $filenames as $file ) {
-								$is_loaded = $this->load_file( $this->slashit( $this->base_path . $folder ) . $file, $class );
+						if ( is_array( $filenames ) && is_array( $folders ) && ! empty( $filenames ) && ! empty( $folders ) ) {
+							foreach ( $folders as $folder ) {
+								foreach ( $filenames as $file ) {
+									$is_loaded = $this->load_file( $this->slashit( $this->base_path . $folder ) . $file, $class );
+									if ( $is_loaded ) {
+										break;
+									}
+								}
 								if ( $is_loaded ) {
 									break;
 								}
 							}
-							if ( $is_loaded ) {
-								break;
-							}
 						}
 					}
-				}
 
-				/**
-				 * Checks and loads class based on all subfolder in the given path
-				 */
-				if ( false === $is_loaded && true === $this->option( 'search_folders' ) ) {
-					$folders = $this->get_folders( $this->base_path );
+					/**
+					 * Checks and loads class based on all subfolder in the given path
+					 */
+					if ( false === $is_loaded && true === $this->option( 'search_folders' ) ) {
+						$folders = $this->get_folders( $this->base_path );
 
-					if ( is_array( $folders ) && is_array( $filenames ) && ! empty( $filenames ) ) {
-						foreach ( $folders as $folder ) {
-							foreach ( $filenames as $file ) {
-								$is_loaded = $this->load_file( $this->slashit( $folder ) . $file, $class );
-								if ( $is_loaded ) {
-									break;
+						if ( is_array( $folders ) && is_array( $filenames ) && ! empty( $filenames ) ) {
+							foreach ( $folders as $folder ) {
+								foreach ( $filenames as $file ) {
+									$is_loaded = $this->load_file( $this->slashit( $folder ) . $file, $class );
+									if ( $is_loaded ) {
+										break;
+									}
 								}
 							}
 						}
