@@ -5,7 +5,6 @@
  * @author Varun Sridharan <varunsridharan23@gmail.com>
  * @version 1.0
  * @since 1.0
- * @link
  * @copyright 2018 Varun Sridharan
  * @license GPLV3 Or Greater (https://www.gnu.org/licenses/gpl-3.0.txt)
  */
@@ -27,14 +26,11 @@ if ( ! class_exists( '\Varunsridharan\PHP\Autoloader' ) ) {
 		 * Stores Subfolder Informations.
 		 *
 		 * @var array
-		 * @access
-		 * @static
 		 */
 		protected static $subfolders = array();
 
 		/**
 		 * @var array
-		 * @access
 		 */
 		protected $options = array();
 
@@ -42,7 +38,6 @@ if ( ! class_exists( '\Varunsridharan\PHP\Autoloader' ) ) {
 		 * Stores Namespace.
 		 *
 		 * @var null
-		 * @access
 		 */
 		protected $namespace = null;
 
@@ -50,7 +45,6 @@ if ( ! class_exists( '\Varunsridharan\PHP\Autoloader' ) ) {
 		 * Stores Base Path.
 		 *
 		 * @var bool
-		 * @access
 		 */
 		protected $base_path = false;
 
@@ -64,7 +58,6 @@ if ( ! class_exists( '\Varunsridharan\PHP\Autoloader' ) ) {
 		 * )
 		 *
 		 * @var bool
-		 * @access
 		 */
 		protected $mappings = false;
 
@@ -79,7 +72,6 @@ if ( ! class_exists( '\Varunsridharan\PHP\Autoloader' ) ) {
 		 * Stores All Classmaps.
 		 *
 		 * @var array
-		 * @static
 		 */
 		protected static $classmaps = array();
 
@@ -310,7 +302,6 @@ if ( ! class_exists( '\Varunsridharan\PHP\Autoloader' ) ) {
 		 *
 		 * @return string
 		 * @example $class = \YourClassNameSpace\AnotherNamespace\YourClass then it returns as yourclass
-		 *
 		 */
 		protected function get_actual_classname( $class ) {
 			$file = explode( '\\', strtolower( $class ) );
